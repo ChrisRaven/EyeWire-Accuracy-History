@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      1.0.1
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -12,7 +12,7 @@
 /*jshint esversion: 6 */
 /*globals $, account, tomni, Cell */
 
-const LOCAL = false;
+var LOCAL = false;
 if (LOCAL) {
   console.log('%c--== TURN OFF "LOCAL" BEFORE RELEASING!!! ==--', "color: red; font-style: italic; font-weight: bold;");
 }
