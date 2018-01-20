@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -318,7 +318,7 @@ Cell.ScytheVisionColors = {
 
 
   this.refreshAccuLevelFromServer = function (level) {
-    $.getJSON('https://eyewire.org//1.0/player/accuracyBreakdown/' + level, function (data) {
+    $.getJSON('/1.0/player/accuracyBreakdown/' + level, function (data) {
       var
         i, len, el, accu, elData,
         indexedData = {};
