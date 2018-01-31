@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.1
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -374,21 +374,98 @@ Cell.ScytheVisionColors = {
     });
   };
 
+  this.displayAsSingleRowWithValues = function (values) {
+    let html = '';
+
+    for (let i = 0; i < values.length; i++) {
+      html += '<div class="accuracy-bar-cover permanent-bar" style="visibility: ' + (values[i] ? 'visible' : 'hidden') + ';"></div>';
+      html += this.generateAccuracyChartHTMLRow(i, values[i] ? values[i].val : undefined, values[i] ? {
+        action: values[i].action,
+        val: values[i].val,
+        wt: values[i].wt,
+        lvl: values[i].lvl,
+        score: values[i].score,
+        cellId: values[i].cellId,
+        cubeId: values[i].cubeId,
+        timestamp: values[i].timestamp
+      } : {});
+    }
+    
+    return html;
+  };
+  
+  this.displayAsSingleRowWithoutValues = function () {
+    let html = '';
+
+    for (let i = 0; i < 60; i++) {
+      html += '<div class="accuracy-bar-cover permanent-bar" style="visibility: hidden;"></div>';
+      html += this.generateAccuracyChartHTMLRow(i, undefined, {});
+    }
+    
+    return html;
+  };
+  
+  this.displayAsTableWithValues = function (values) {
+    let html = '';
+    let row;
+    let contFlag = false;
+
+    for (let len = values.length, i = len - 10; i > -1; (i + 1) % 10 && !contFlag ? i++ : (i -=19, contFlag = true)) { // i = 50..59, 40..49, (...), 0..9
+      contFlag = false;
+      html += '<div class="accuracy-bar-cover ' + (i >= 50 ? 'permanent-bar' : 'hideable-bar') + '" style="visibility: ' + (values[i] ? 'visible' : 'hidden') + ';"></div>';
+      html += this.generateAccuracyChartHTMLRow(i, values[i] ? values[i].val : undefined, values[i] ? {
+        action: values[i].action,
+        val: values[i].val,
+        wt: values[i].wt,
+        lvl: values[i].lvl,
+        score: values[i].score,
+        cellId: values[i].cellId,
+        cubeId: values[i].cubeId,
+        timestamp: values[i].timestamp
+      } : {});
+
+      row = Math.floor(i / 10);
+      if ((i + 1) % 10 === 0 && i > 10) {
+        html += '<div class="separator-line" id="separator-line-' + row + '" style="display: none;"></div>';
+      }
+    }
+    
+    return html;
+  };
+  
+  this.displayAsTableWithoutValues = function () {
+    let html = '';
+
+    for (let len = 60, i = len - 10; i > -1; (i + 1) % 10 && !contFlag ? i++ : (i -=19, contFlag = true)) { // i = 50..59, 40..49, (...), 0..9
+      contFlag = false;
+      html += '<div class="accuracy-bar-cover ' + (i >= 50 ? 'permanent-bar' : 'hideable-bar') + '" style="visibility: hidden;"></div>';
+      html += this.generateAccuracyChartHTMLRow(i, undefined, {});
+
+      row = Math.floor(i / 10);
+      if ((i + 1) % 10 === 0 && i > 10) {
+        html += '<div class="separator-line" id="separator-line-' + row + '" style="display: none;"></div>';
+      }
+    }
+    
+    return html;
+  };
 
   this.generateAccuracyWidgetHTML = function () {
     var
       html = '',
-      contFlag = false,
-      row,
       values = K.ls.get('accu-data'),
-      lastHighlightedBar = K.ls.get('last-highlighted'),
-      visibilityState = 'block';
+      lastHighlightedBar = K.ls.get('last-highlighted');
 
-    visibilityState = 'block';
+   let singleRow = K.ls.get('accuracy-show-as-row') === 'true';
+
     K.gid('activityTrackerContainer').style.display = 'none';
 
+    if (K.gid('accuracy-container')) {
+      K.gid('accuracy-container').remove();
+    }
+
     $('body').append(
-      '<div id="accuracy-container" style="display:' + visibilityState + ';">' +
+      '<div id="accuracy-container"' + (singleRow ? ' class="singleRow"' : '') + '>' +
         '<span id="more-less-button" data-state="closed">more &darr;</span>' +
         '<div id="accuracy-bars-wrapper"></div>' +
         '<div id="weight-wrapper">' +
@@ -403,38 +480,13 @@ Cell.ScytheVisionColors = {
       refreshData = true;
 
       values = JSON.parse(values);
-      accuData = values;
-      for (let len = values.length, i = len - 10; i > -1; (i + 1) % 10 && !contFlag ? i++ : (i -=19, contFlag = true)) { // i = 50..59, 40..49, (...), 0..9
-        contFlag = false;
-        html += '<div class="accuracy-bar-cover ' + (i >= 50 ? 'permanent-bar' : 'hideable-bar') + '" style="visibility: ' + (values[i] ? 'visible' : 'hidden') + ';"></div>';
-        html += this.generateAccuracyChartHTMLRow(i, values[i] ? values[i].val : undefined, values[i] ? {
-          action: values[i].action,
-          val: values[i].val,
-          wt: values[i].wt,
-          lvl: values[i].lvl,
-          score: values[i].score,
-          cellId: values[i].cellId,
-          cubeId: values[i].cubeId,
-          timestamp: values[i].timestamp
-        } : {});
+      accuData = values; // do not remove - it's for the "global" accuData
 
-        row = Math.floor(i / 10);
-        if ((i + 1) % 10 === 0 && i > 10) {
-          html += '<div class="separator-line" id="separator-line-' + row + '" style="display: none;"></div>';
-        }
-      }
+      let type = singleRow ? 'SingleRow' : 'Table';
+      html += this['displayAs' + type + 'WithValues'](values);
     }
     else {
-      for (let len = 60, i = len - 10; i > -1; (i + 1) % 10 && !contFlag ? i++ : (i -=19, contFlag = true)) { // i = 50..59, 40..49, (...), 0..9
-        contFlag = false;
-        html += '<div class="accuracy-bar-cover ' + (i >= 50 ? 'permanent-bar' : 'hideable-bar') + '" style="visibility: hidden;"></div>';
-        html += this.generateAccuracyChartHTMLRow(i, undefined, {});
-
-        row = Math.floor(i / 10);
-        if ((i + 1) % 10 === 0 && i > 10) {
-          html += '<div class="separator-line" id="separator-line-' + row + '" style="display: none;"></div>';
-        }
-      }
+      html += this['displayAs' + type + 'WithoutValues']();
     }
 
     html += '<progress class="accu-refresh-progress-bar" value="100" max="100"></progress>';
@@ -636,6 +688,10 @@ Cell.ScytheVisionColors = {
     lbl.innerHTML = html;
   });
 
+  function div(weight) {
+    return '<div class="accu-wt-lbl-cell" style="background-color: ' + _this.weightToColor(weight) + ';"></div>';
+  }
+
   doc.on('mouseenter', '#accuracy-weight-stripe', function () {
     var
       html = '',
@@ -646,10 +702,6 @@ Cell.ScytheVisionColors = {
     lbl.style.display = 'block';
     lbl.style.left = this.getBoundingClientRect().left + 'px';
     lbl.style.top = this.getBoundingClientRect().bottom + 'px';
-
-    function div(weight) {
-      return '<div class="accu-wt-lbl-cell" style="background-color: ' + _this.weightToColor(weight) + ';"></div>';
-    }
 
     html = '<table>';
     html += '<tr><td>' + div(1)           + '</td><td>1 &ge; weight &lt; 2</td></tr>';
@@ -710,16 +762,58 @@ Cell.ScytheVisionColors = {
 
     window.open(window.location.origin + "?tcJumpTaskId=" + data.cubeId);
   });
+  
+  
+  if (!K.gid('ews-settings-group')) {
+    $('#settingsMenu').append(`
+      <div id="ews-settings-group" class="settings-group ews-settings-group invisible">
+        <h1>Stats Settings</h1>
+      </div>
+    `);
+  }
+  
+  let isChecked = K.ls.get('accuracy-show-as-row') === 'true';
+
+  $('#ews-settings-group').append(`
+    <div class="setting">
+      <span>Show as a single row</span>
+      <div class="checkbox ` + (isChecked ? 'on' : 'off') + `">
+        <div class="checkbox-handle"></div>
+        <input type="checkbox" id="accuracy-show-as-row-option" style="display: none;"` + (isChecked ? ' checked' : '') + `>
+      </div>
+    </div>
+  `);
+  
+  $('#accuracy-show-as-row-option').closest('div.setting').click(function (evt) {
+    evt.stopPropagation();
+
+    let $elem = $(this).find('input');
+    let elem = $elem[0];
+    let newState = !elem.checked;
+
+    K.ls.set('accuracy-show-as-row', newState);
+    elem.checked = newState;
+    // elem.click();
+
+    $elem.add($elem.closest('.checkbox')).removeClass(newState ? 'off' : 'on').addClass(newState ? 'on' : 'off');
+    $(document).trigger('ews-accuracy-show-as-row', newState);
+  });
+  
+  $(document).on('ews-accuracy-show-as-row', function (evt, state) {
+    _this.generateAccuracyWidgetHTML();
+  });
+  
+  $(document).trigger('ews-accuracy-show-as-row', isChecked);
 }
 // end: ACCURACY CHART
 
 
 
 if (LOCAL) {
-  K.addCSSFile('http://127.0.0.1:8887/accuracy_history.css');
+  K.addCSSFile('http://127.0.0.1:8887/styles.css');
 }
 else {
-  K.addCSSFile('https://chrisraven.github.io/EyeWire-Accuracy-History/accuracy_history.css?v=1');
+  K.addCSSFile('https://chrisraven.github.io/EyeWire-Accuracy-History/styles.css?v=1');
 }
 
 
