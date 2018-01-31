@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.1.1
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -776,7 +776,7 @@ Cell.ScytheVisionColors = {
 
   $('#ews-settings-group').append(`
     <div class="setting">
-      <span>Show as a single row</span>
+      <span>Show accuracy as a single row</span>
       <div class="checkbox ` + (isChecked ? 'on' : 'off') + `">
         <div class="checkbox-handle"></div>
         <input type="checkbox" id="accuracy-show-as-row-option" style="display: none;"` + (isChecked ? ' checked' : '') + `>
