@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.1.2
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -92,10 +92,16 @@ Cell.ScytheVisionColors = {
 };
 */
 
+let ewdlcSettings = localStorage.getItem('ewdlc-prefs');
+
+if (ewdlcSettings) {
+  ewdlcSettings = JSON.parse(ewdlcSettings);
+}
+
   const
     TB_COLOR = 'lightgray',
-    SCYTHE_COLOR = Cell.ScytheVisionColors.scythed,
-    REAP_COLOR = Cell.ScytheVisionColors.reap,
+    SCYTHE_COLOR = ewdlcSettings ? ewdlcSettings['prvw-colors'].scythed : Cell.ScytheVisionColors.scythed,
+    REAP_COLOR = ewdlcSettings ? ewdlcSettings['prvw-colors'].reap : Cell.ScytheVisionColors.reap,
     WT_0_COLOR = '#FF554D',
     WT_1_COLOR = '#46DBE8',
     WT_2_COLOR = '#9659FF',
