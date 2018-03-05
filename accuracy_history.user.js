@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.1.2
+// @version      1.1.3
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -462,7 +462,8 @@ if (ewdlcSettings) {
       values = K.ls.get('accu-data'),
       lastHighlightedBar = K.ls.get('last-highlighted');
 
-   let singleRow = K.ls.get('accuracy-show-as-row') === 'true';
+    let singleRow = K.ls.get('accuracy-show-as-row') === 'true';
+    let type = singleRow ? 'SingleRow' : 'Table';
 
     K.gid('activityTrackerContainer').style.display = 'none';
 
@@ -488,7 +489,6 @@ if (ewdlcSettings) {
       values = JSON.parse(values);
       accuData = values; // do not remove - it's for the "global" accuData
 
-      let type = singleRow ? 'SingleRow' : 'Table';
       html += this['displayAs' + type + 'WithValues'](values);
     }
     else {
