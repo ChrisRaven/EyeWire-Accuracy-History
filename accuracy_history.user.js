@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.1.3
+// @version      1.1.3.1
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -441,6 +441,8 @@ if (ewdlcSettings) {
   
   this.displayAsTableWithoutValues = function () {
     let html = '';
+    let contFlag = false;
+    let row;
 
     for (let len = 60, i = len - 10; i > -1; (i + 1) % 10 && !contFlag ? i++ : (i -=19, contFlag = true)) { // i = 50..59, 40..49, (...), 0..9
       contFlag = false;
