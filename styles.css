@@ -123,7 +123,7 @@
 #accu-floating-label {
     color: white;
     font-size: 10pt;
-    position: relative;
+    position: absolute;
     display: none;
     width: 230px;
     height: 160px;

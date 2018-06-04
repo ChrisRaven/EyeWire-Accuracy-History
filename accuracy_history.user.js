@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.2.1
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -854,7 +854,7 @@ function Settings() {
       K.addCSSFile('http://127.0.0.1:8887/styles.css');
     }
     else {
-      K.addCSSFile('https://chrisraven.github.io/EyeWire-Accuracy-History/styles.css?v=1');
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Accuracy-History/styles.css?v=2');
     }
 
     let isChecked = K.ls.get(optName) === 'true';
