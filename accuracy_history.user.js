@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.2.1
+// @version      1.3
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -187,8 +187,21 @@ function Settings() {
 
 
     this.cubeData = null;
+    this.quantized = settings.getValue('accu-quantize-colors');
+    this.tbThreshold = 0.8;
 
     this.getIntermediateColor = function (percent, start, middle, end) {
+      if (this.quantized) {
+        if (percent >= 0.95) {
+          return '#42d5ec';
+        }
+        if (percent >= this.tbThreshold) {
+          return '#1dc973';
+        }
+        return '#d66c6c';
+      }
+
+
       let
         r, g, b, multiplier;
 
@@ -844,27 +857,39 @@ function Settings() {
     });
     
 
+    $(document).on('ews-setting-changed', function (evt, data) {
+      if (data.setting === 'accu-quantize-colors') {
+        _this.quantized = data.state;
+        _this.updateAccuracyBars();
+      }
+    });
   }
 
   
   let optName = 'accuracy-show-as-row';
+  let settings;
   
   function main() {
     if (LOCAL) {
       K.addCSSFile('http://127.0.0.1:8887/styles.css');
     }
     else {
-      K.addCSSFile('https://chrisraven.github.io/EyeWire-Accuracy-History/styles.css?v=2');
+      K.addCSSFile('https://chrisraven.github.io/EyeWire-Accuracy-History/styles.css?v=3');
     }
 
     let isChecked = K.ls.get(optName) === 'true';
 
-    let settings = new Settings();
+    settings = new Settings();
     settings.addCategory();
     settings.addOption({
       name: 'Show accuracy as a single row',
       id: optName,
       state: isChecked,
+      defaultState: false
+    });
+    settings.addOption({
+      name: 'Quantize colors',
+      id: 'accu-quantize-colors',
       defaultState: false
     });
 
