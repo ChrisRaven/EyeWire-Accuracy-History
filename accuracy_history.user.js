@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.3.1
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -97,7 +97,15 @@ function Settings() {
 
       $.extend(settings, options);
       let storedState = K.ls.get(settings.id);
-      let state = storedState === null ? settings.defaultState : storedState.toLowerCase() === 'true';
+      let state;
+
+      if (storedState === null) {
+        K.ls.set(settings.id, settings.defaultState);
+        state = settings.defaultState;
+      }
+      else {
+        state = storedState.toLowerCase() === 'true';
+      }
 
       target.append(`
         <div class="setting" id="${settings.id}-wrapper">
