@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.3.1
+// @version      1.3.2
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -890,7 +890,7 @@ function Settings() {
     settings = new Settings();
     settings.addCategory();
     settings.addOption({
-      name: 'Show accuracy as a single row',
+      name: 'Accuracy as a single row',
       id: optName,
       state: isChecked,
       defaultState: false
