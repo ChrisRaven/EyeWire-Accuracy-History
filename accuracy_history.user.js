@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Accuracy History
 // @namespace    http://tampermonkey.net/
-// @version      1.3.2
+// @version      1.4
 // @description  Show history of playing
 // @author       Krzysztof Kruk
 // @match        https://*.eyewire.org/*
@@ -38,6 +38,25 @@ if (LOCAL) {
 
     addCSSFile: function (path) {
       $("head").append('<link href="' + path + '" rel="stylesheet" type="text/css">');
+    },
+
+    
+    // Source: https://stackoverflow.com/a/6805461
+    injectJS: function (text, sURL) {
+      let
+        tgt,
+        scriptNode = document.createElement('script');
+
+      scriptNode.type = "text/javascript";
+      if (text) {
+        scriptNode.textContent = text;
+      }
+      if (sURL) {
+        scriptNode.src = sURL;
+      }
+
+      tgt = document.getElementsByTagName('head')[0] || document.body || document.documentElement;
+      tgt.appendChild(scriptNode);
     },
 
 
@@ -180,6 +199,7 @@ function Settings() {
 
     const
       TB_COLOR = 'lightgray',
+      COMPLETE_COLOR = ewdlcSettings ? ewdlcSettings['prvw-colors'].complete2 : Cell.ScytheVisionColors.complete2,
       SCYTHE_COLOR = ewdlcSettings ? ewdlcSettings['prvw-colors'].scythed : Cell.ScytheVisionColors.scythed,
       REAP_COLOR = ewdlcSettings ? ewdlcSettings['prvw-colors'].reap : Cell.ScytheVisionColors.reap,
       WT_0_COLOR = '#FF554D',
@@ -257,6 +277,7 @@ function Settings() {
             case 'TBed': return TB_COLOR;
             case 'reaped': return REAP_COLOR;
             case 'scythed': return SCYTHE_COLOR;
+            case 'completed': return COMPLETE_COLOR;
           }
         }
         else if (action === 'played') {
@@ -372,29 +393,37 @@ function Settings() {
       K.ls.set('last-highlighted', id);
     };
 
-
     this.updateAccuracyBar = function (index, accu, data, changeColor) {
-      let
-        el = K.gid('accuracy-bar-' + index);
+      if (data.action === 'completed') {
+        index = accuData.findIndex(el => el.cubeId === index);
+      }
+      let el = K.gid('accuracy-bar-' + index);
+
+      if (!el) {
+        return;
+      }
 
       if (typeof changeColor === 'undefined') {
         changeColor = true;
       }
 
-      if (el) {
-        el.style.height = (typeof accu === 'number' ? accu * 0.44 : '44') + 'px';
-        if (changeColor) {
-          el.style.backgroundColor = this.accuColor(accu, data.action);
-        }
-        el.style.marginTop = (typeof accu === 'number' ? 44 - accu * 0.44 : '0') + 'px';
-        el.dataset.accuracy = JSON.stringify(data);
+      el.style.height = (typeof accu === 'number' ? accu * 0.44 : '44') + 'px';
+      if (changeColor) {
+        el.style.backgroundColor = this.accuColor(accu, data.action);
       }
+      el.style.marginTop = (typeof accu === 'number' ? 44 - accu * 0.44 : '0') + 'px';
+      el.dataset.accuracy = JSON.stringify(data);
 
       if (el.dataset.accuracy && el.dataset.accuracy !== '{}') {
         el.previousSibling.style.visibility = 'visible';
       }
       else {
         el.previousSibling.style.visibility = 'hidden';
+      }
+
+      if (data.action === 'completed') {
+        accuData[index].action = 'completed';
+        K.ls.set('accu-data', JSON.stringify(accuData));
       }
     };
 
@@ -865,12 +894,18 @@ function Settings() {
     });
     
 
-    $(document).on('ews-setting-changed', function (evt, data) {
+    doc.on('ews-setting-changed', function (evt, data) {
       if (data.setting === 'accu-quantize-colors') {
         _this.quantized = data.state;
         _this.updateAccuracyBars();
       }
     });
+
+    if (K.ls.get('accu-show-completes') === 'true') {
+      doc.on('accuracy-history-cube-scythed', function (evt, id) {
+        _this.updateAccuracyBar(id, null, {action: 'completed'}, true);
+      });
+    }
   }
 
   
@@ -900,6 +935,30 @@ function Settings() {
       id: 'accu-quantize-colors',
       defaultState: false
     });
+    settings.addOption({
+      name: 'Show completes',
+      id: 'accu-show-completes',
+      defaultState: false
+    })
+  
+    if (K.ls.get('accu-show-completes') === 'true') {
+      K.injectJS(`
+      (function (open) {
+        XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
+          this.addEventListener("readystatechange", function (evt) {
+            if (this.readyState == 4 && this.status == 200 && method === 'POST' && url.indexOf('/1.0/task/') !== -1) {
+              if (!this.responseText) {
+                return;
+              }
+              let id = parseInt(Object.keys(JSON.parse(this.responseText))[0], 10);
+              $(document).trigger('accuracy-history-cube-scythed', id);
+            }
+          }, false);
+          open.call(this, method, url, async, user, pass);
+        };
+      }) (XMLHttpRequest.prototype.open);
+    `);
+    }
 
     let chart = new AccuChart();
 
